@@ -1,11 +1,12 @@
 package com.leadflow.leadflow_backend.domain;
-
-import lombok.Data;
+import lombok.*;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 import java.time.LocalDateTime;
 
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
 @Document(collection = "message_logs")
 public class MessageLog {
     @Id
