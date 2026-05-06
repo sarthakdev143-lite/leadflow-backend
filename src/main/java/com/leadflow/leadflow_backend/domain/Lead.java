@@ -2,6 +2,8 @@ package com.leadflow.leadflow_backend.domain;
 
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+
+import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import lombok.Getter;
 import lombok.Setter;
@@ -46,5 +48,9 @@ public class Lead {
     private OffsetDateTime createdAt;
 
     private OffsetDateTime updatedAt;
+
+    private LocalDateTime lastReminderSent;
+    private LocalDateTime lastFollowupSent;
+
 
 }
