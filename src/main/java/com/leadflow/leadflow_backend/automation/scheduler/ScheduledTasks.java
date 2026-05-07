@@ -102,6 +102,10 @@ package com.leadflow.leadflow_backend.automation.scheduler;
 
 import com.leadflow.leadflow_backend.domain.Lead;
 import com.leadflow.leadflow_backend.repos.LeadRepository;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -110,6 +114,8 @@ import java.util.List;
 
 @Component
 public class ScheduledTasks {
+
+    private static final Logger logger = LoggerFactory.getLogger(ScheduledTasks.class);
 
     private final LeadRepository leadRepository;
 
@@ -120,7 +126,7 @@ public class ScheduledTasks {
     @Scheduled(fixedRate = 60000) // every 1 min
     public void processLeads() {
 
-        System.out.println("Scheduler running...");
+        logger.info("Scheduler started...");
 
         LocalDateTime now = LocalDateTime.now();
 
@@ -132,14 +138,24 @@ public class ScheduledTasks {
         List<Lead> newLeads = leadRepository
                 .findByStatusAndCreatedAtBefore("NEW", newThreshold);
 
+        logger.info("Total NEW leads found: {}", newLeads.size());
+
         for (Lead lead : newLeads) {
 
             if (lead.getLastReminderSent() == null) {
 
-                System.out.println("Reminder sent to NEW Lead: " + lead.getName());
+                logger.info(
+                        "Reminder sent to NEW lead: {}",
+                        lead.getName()
+                );
 
                 lead.setLastReminderSent(now);
                 leadRepository.save(lead);
+
+                logger.info(
+                        "Updated lastReminderSent for lead: {}",
+                        lead.getName()
+                );
             }
         }
 
@@ -148,18 +164,34 @@ public class ScheduledTasks {
         // -------------------------------
         LocalDateTime contactedThreshold = now.minusDays(2);
 
-        List<Lead> contactedLeads = leadRepository
-                .findByStatusAndCreatedAtBefore("CONTACTED", contactedThreshold);
+        List<Lead> contactedLeads = leadRepository.findByStatusAndCreatedAtBefore(
+                "CONTACTED", contactedThreshold);
+
+        logger.info(
+                "Total CONTACTED leads found: {}",
+                contactedLeads.size()
+        );
+
 
         for (Lead lead : contactedLeads) {
 
             if (lead.getLastFollowupSent() == null) {
 
-                System.out.println("Follow-up sent to CONTACTED Lead: " + lead.getName());
+                logger.info(
+                        "Follow-up sent to CONTACTED lead: {}",
+                        lead.getName()
+                );
 
                 lead.setLastFollowupSent(now);
                 leadRepository.save(lead);
+
+                logger.info(
+                        "Updated lastFollowupSent for lead: {}",
+                        lead.getName()
+                );
             }
         }
+
+        logger.info("Scheduler completed...");
     }
 }

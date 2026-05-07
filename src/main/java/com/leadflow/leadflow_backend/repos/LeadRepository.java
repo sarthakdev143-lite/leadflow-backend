@@ -8,7 +8,7 @@ import java.util.List;
 
 
 public interface LeadRepository extends MongoRepository<Lead, String> {
-    List<Lead> findByStatusAndCreatedAtBefore (String status, LocalDateTime threshold);
+    List<Lead> findByStatusAndCreatedAtBefore(String status, LocalDateTime threshold);
 
     boolean existsByIdIgnoreCase(String id);
 
