@@ -13,12 +13,14 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/telegram")
+@CrossOrigin(origins = "*")
 public class TelegramController {
 
     private static final Logger logger = LoggerFactory.getLogger(TelegramController.class);
 
     @Autowired
     private TelegramService telegramService;
+
 
     /**
      * POST /api/telegram/send
@@ -35,6 +37,7 @@ public class TelegramController {
     @PostMapping("/send")
     public ResponseEntity<SendResponse> sendTelegramMessage(
             @Valid @RequestBody TelegramRequest request) {
+        System.out.println("\n\nSending Telegram message!!!");
 
         logger.info("Received Telegram send request for lead: {}", request.getName());
 
@@ -61,3 +64,4 @@ public class TelegramController {
         }
     }
 }
+

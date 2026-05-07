@@ -33,9 +33,7 @@ public class SwaggerConfig {
                         .addProperty("property", new StringSchema())
                         .addProperty("rejectedValue", new ObjectSchema())
                         .addProperty("path", new StringSchema())));
-    }
-
-    @Bean
+    }   @Bean
     public OperationCustomizer operationCustomizer() {
         // add error type to each operation
         return (operation, handlerMethod) -> {

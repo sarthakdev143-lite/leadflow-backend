@@ -25,11 +25,6 @@ public class TelegramService {
     private static final int MAX_RETRIES = 3;
     private static final long RETRY_DELAY_MS = 1000L;
 
-//    @Value("${telegram.bot.token}")
-//    private String botToken;
-//
-//    @Value("${telegram.chat.id}")
-//    private String chatId;
 
     @Value("${telegram.bot.token}")   // ← must match exactly
     private String botToken;
@@ -43,7 +38,6 @@ public class TelegramService {
     @Autowired
     private RestTemplate restTemplate;
 
-    // ─── Public: Send Message ─────────────────────────────────────────────────────
 
     public SendResponse sendMessage(String name, String phone, String source, String type) {
         String messageText = getTemplate(type, name, phone, source);
@@ -134,6 +128,23 @@ public class TelegramService {
 
     //  Private: Log to MongoDB
 
+//    private void logMessage(String chatId, String text, String type,
+//                            MessageStatus status, Integer msgId, String error) {
+//        try {
+//            MessageLog log = new MessageLog();
+//            log.setChatId(chatId);
+//            log.setMessageText(text);
+//            log.setMessageType(MessageType.valueOf(type));
+//            log.setStatus(status);
+//            log.setTelegramMessageId(msgId);
+//            log.setErrorMessage(error);
+//            log.setSentAt(LocalDateTime.now());
+//            messageLogRepository.save(log);
+//            logger.info("Message log saved. Status: {}", status);
+//        } catch (Exception e) {
+//            logger.error("Failed to save message log: {}", e.getMessage());
+//        }
+
     private void logMessage(String chatId, String text, String type,
                             MessageStatus status, Integer msgId, String error) {
         try {
@@ -145,10 +156,14 @@ public class TelegramService {
             log.setTelegramMessageId(msgId);
             log.setErrorMessage(error);
             log.setSentAt(LocalDateTime.now());
-            messageLogRepository.save(log);
-            logger.info("Message log saved. Status: {}", status);
+
+            logger.info("Saving to MongoDB — status: {}, chatId: {}", status, chatId); // ← ADD
+            MessageLog saved = messageLogRepository.save(log);
+            logger.info("Saved successfully — id: {}", saved.getId()); // ← ADD
+
         } catch (Exception e) {
-            logger.error("Failed to save message log: {}", e.getMessage());
+            logger.error("FAILED to save message log: {}", e.getMessage(), e); // ← add , e
         }
+
     }
 }
