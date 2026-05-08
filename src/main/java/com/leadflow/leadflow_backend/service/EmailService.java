@@ -34,7 +34,7 @@ public class EmailService {
     @Autowired
     private MessageLogRepository messageLogRepository;
 
-    // ─── Public: Send Email ───────────────────────────────────────────────────────
+    // ─── Public: Send Email
 
     public SendResponse sendEmail(String toEmail, String leadName, String type) {
         logger.info("Attempting to send email. Type: {}, To: {}", type, toEmail);
@@ -82,7 +82,7 @@ public class EmailService {
         return null;
     }
 
-    // ─── Subject by type ─────────────────────────────────────────────────────────
+    // ─── Subject by type
 
     private String getSubject(String type) {
         switch (type) {
@@ -94,7 +94,7 @@ public class EmailService {
         }
     }
 
-    // ─── Body by type ─────────────────────────────────────────────────────────────
+    // ─── Body by type
 
     private String getBody(String type, String name) {
         switch (type) {
@@ -106,7 +106,7 @@ public class EmailService {
         }
     }
 
-    // ─── Private: Log to MongoDB ──────────────────────────────────────────────────
+    // ─── Private: Log to MongoDB
 
     private void logMessage(String email, String subject, String type,
                             MessageStatus status, String error) {

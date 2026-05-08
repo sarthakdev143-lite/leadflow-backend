@@ -18,4 +18,6 @@ public class MessageLog {
     private Integer telegramMessageId;
     private String errorMessage;
     private LocalDateTime sentAt;
+    private String recipient;
+    private String channel;
 }
