@@ -11,4 +11,6 @@ import java.util.List;
 public interface LeadRepository extends MongoRepository<Lead, String> {
 
     List<Lead> findByStatus(LeadStatus status);
+    List<Lead> findByNameContainingIgnoreCase(String name);
+    List<Lead> findByPhoneContaining(String phone);
 }
