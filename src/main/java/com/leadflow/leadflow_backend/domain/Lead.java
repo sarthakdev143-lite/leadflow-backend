@@ -47,4 +47,6 @@ public class Lead {
 
     private OffsetDateTime updatedAt;
 
+    private String email;
+
 }
