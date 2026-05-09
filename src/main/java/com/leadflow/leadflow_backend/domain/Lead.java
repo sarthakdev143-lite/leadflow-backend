@@ -19,6 +19,9 @@ public class Lead {
     @Size(min = 2, message = "Name should have at least 2 characters")
     private String name;
 
+    @Size(max = 255)
+    private String email;
+
     @NotBlank(message = "Phone number is mandatory")
     @Pattern(regexp = "^[6-9]\\d{9}$", message = "Invalid phone number: Must be 10 digits and start with 6-9")
     private String phone;
