@@ -2,23 +2,21 @@ package com.leadflow.leadflow_backend.domain;
 
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
-import java.time.OffsetDateTime;
+import java.time.LocalDateTime;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 
-@Document
+@Document(collection = "leads")
 @Getter
 @Setter
 public class Lead {
 
-    @NotNull
     @Id
     private String id;
 
-    @NotNull
     @Size(max = 255)
     private String userId;
 
@@ -41,10 +39,15 @@ public class Lead {
 
     private String notes;
 
-    private OffsetDateTime lastContacted;
+    private LocalDateTime lastContacted;
 
-    private OffsetDateTime createdAt;
+    private LocalDateTime createdAt;
 
-    private OffsetDateTime updatedAt;
+    private LocalDateTime updatedAt;
+
+    // Scheduler fields
+    private LocalDateTime lastReminderSent;
+
+    private LocalDateTime lastFollowupSent;
 
 }

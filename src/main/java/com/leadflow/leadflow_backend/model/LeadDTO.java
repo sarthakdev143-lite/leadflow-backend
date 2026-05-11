@@ -2,7 +2,7 @@ package com.leadflow.leadflow_backend.model;
 
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
-import java.time.OffsetDateTime;
+import java.time.LocalDateTime;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -10,12 +10,9 @@ import lombok.Setter;
 @Getter
 @Setter
 public class LeadDTO {
-
-    @Size(max = 255)
     @LeadIdValid
     private String id;
 
-    @NotNull
     @Size(max = 255)
     private String userId;
 
@@ -38,10 +35,10 @@ public class LeadDTO {
 
     private String notes;
 
-    private OffsetDateTime lastContacted;
+    private LocalDateTime lastContacted;
 
-    private OffsetDateTime createdAt;
+    private LocalDateTime createdAt;
 
-    private OffsetDateTime updatedAt;
+    private LocalDateTime updatedAt;
 
 }
