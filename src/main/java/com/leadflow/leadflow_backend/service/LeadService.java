@@ -75,6 +75,9 @@ public class LeadService {
         if (partialLead.getName() != null && !partialLead.getName().isEmpty()) {
             existingLead.setName(partialLead.getName());
         }
+        if (partialLead.getEmail() != null && !partialLead.getEmail().isEmpty()) {
+            existingLead.setEmail(partialLead.getEmail());
+        }
 
         if (partialLead.getPhone() != null && !partialLead.getPhone().isEmpty()) {
             existingLead.setPhone(partialLead.getPhone());

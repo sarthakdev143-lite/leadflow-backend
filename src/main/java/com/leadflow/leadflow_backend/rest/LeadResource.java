@@ -15,7 +15,7 @@ import java.util.List;
 @Slf4j
 @RestController
 @RequestMapping("/api/leads")
-@CrossOrigin("*")
+//@CrossOrigin("*")
 public class LeadResource {
 
     @Autowired

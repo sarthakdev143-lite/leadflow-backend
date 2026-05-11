@@ -8,6 +8,10 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
+
+
 
 @Data
 @Document(collection = "leads")
@@ -28,6 +32,7 @@ public class Lead {
     private String source;
     private LeadStatus status;
     private String notes;
+
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }

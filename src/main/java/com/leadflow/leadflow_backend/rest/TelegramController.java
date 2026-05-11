@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/telegram")
-@CrossOrigin(origins = "*")
+//@CrossOrigin(origins = "*")
 public class TelegramController {
 
     private static final Logger logger = LoggerFactory.getLogger(TelegramController.class);
