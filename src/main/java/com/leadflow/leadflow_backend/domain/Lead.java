@@ -3,7 +3,9 @@ package com.leadflow.leadflow_backend.domain;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
-import lombok.Data;
+import java.time.LocalDateTime;
+import lombok.Getter;
+import lombok.Setter;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
@@ -13,14 +15,19 @@ import java.time.ZoneOffset;
 
 
 
-@Data
 @Document(collection = "leads")
+@Getter
+@Setter
 public class Lead {
 
     @Id
     private String id;
-    @NotBlank(message = "Name is mandatory")
-    @Size(min = 2, message = "Name should have at least 2 characters")
+
+    @Size(max = 255)
+    private String userId;
+
+    @NotNull
+    @Size(max = 255)
     private String name;
 
     @Size(max = 255)
@@ -33,6 +40,15 @@ public class Lead {
     private LeadStatus status;
     private String notes;
 
+    private LocalDateTime lastContacted;
+
     private LocalDateTime createdAt;
+
     private LocalDateTime updatedAt;
+
+    // Scheduler fields
+    private LocalDateTime lastReminderSent;
+
+    private LocalDateTime lastFollowupSent;
+
 }
