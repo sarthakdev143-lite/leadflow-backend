@@ -1,8 +1,13 @@
 package com.leadflow.leadflow_backend.exception;
 
-public class AuthException extends RuntimeException {
+import org.springframework.http.HttpStatus;
 
-  public AuthException(String message) {
-    super(message);
-  }
+public class AuthException extends AppException {
+    public AuthException(String message) {
+        super("AUTHENTICATION_FAILED", message, HttpStatus.UNAUTHORIZED);
+    }
+
+    public AuthException() {
+        super("AUTHENTICATION_FAILED", "Invalid credentials", HttpStatus.UNAUTHORIZED);
+    }
 }

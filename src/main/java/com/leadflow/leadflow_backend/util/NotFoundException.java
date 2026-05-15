@@ -1,18 +1,14 @@
 package com.leadflow.leadflow_backend.util;
 
+import com.leadflow.leadflow_backend.exception.AppException;
 import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.ResponseStatus;
 
-
-@ResponseStatus(HttpStatus.NOT_FOUND)
-public class NotFoundException extends RuntimeException {
-
+public class NotFoundException extends AppException {
     public NotFoundException() {
-        super();
+        super("NOT_FOUND", "Resource not found", HttpStatus.NOT_FOUND);
     }
 
     public NotFoundException(final String message) {
-        super(message);
+        super("NOT_FOUND", message, HttpStatus.NOT_FOUND);
     }
-
 }

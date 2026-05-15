@@ -3,6 +3,7 @@ package com.leadflow.leadflow_backend.Scheduler;
 import com.leadflow.leadflow_backend.domain.Lead;
 import com.leadflow.leadflow_backend.repos.LeadRepository;
 import com.leadflow.leadflow_backend.service.AutomationService;
+import com.leadflow.leadflow_backend.service.EmailService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
