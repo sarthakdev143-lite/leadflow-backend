@@ -41,6 +41,7 @@ public class Lead {
     private LeadStatus status;
     private String notes;
 
+    private String createdBy;
     private LocalDateTime lastContacted;
 
     private LocalDateTime createdAt;
