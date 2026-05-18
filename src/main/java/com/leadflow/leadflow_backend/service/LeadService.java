@@ -1,5 +1,4 @@
 package com.leadflow.leadflow_backend.service;
-
 import com.leadflow.leadflow_backend.domain.Lead;
 import com.leadflow.leadflow_backend.domain.LeadStatus;
 import com.leadflow.leadflow_backend.model.LeadDTO;
@@ -8,12 +7,15 @@ import com.leadflow.leadflow_backend.exception.ResourceNotFoundException;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
+
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+@Slf4j
 @Service
 public class LeadService {
 
@@ -26,16 +28,31 @@ public class LeadService {
     @Autowired
     private AutomationService automationService;
 
-    public LeadDTO createLead(final LeadDTO leadDTO) {
-        log.info("Creating new lead with name: {}", leadDTO.getName());
-        final Lead lead = new Lead();
-        mapToEntity(leadDTO, lead);
     private String getCurrentUserId() {
         Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 
         if (principal instanceof org.springframework.security.core.userdetails.UserDetails) {
             return ((org.springframework.security.core.userdetails.UserDetails) principal).getUsername();
         }
+
+        if (principal instanceof com.leadflow.leadflow_backend.model.User) {
+            return ((com.leadflow.leadflow_backend.model.User) principal).getEmail();
+        }
+
+        return SecurityContextHolder.getContext().getAuthentication().getName();
+    }
+
+    public LeadDTO createLead(final LeadDTO leadDTO) {
+        log.info("Creating new lead with name: {}", leadDTO.getName());
+        final Lead lead = new Lead();
+        mapToEntity(leadDTO, lead);
+
+        String currentUserId = getCurrentUserId();
+        lead.setUserId(currentUserId);
+        lead.setCreatedBy(currentUserId);
+
+        lead.setCreatedAt(LocalDateTime.now());
+        lead.setUpdatedAt(LocalDateTime.now());
 
         final Lead savedLead = leadRepository.save(lead);
         log.info("Lead saved with ID: {}", savedLead.getId());
@@ -59,16 +76,8 @@ public class LeadService {
         return mapToDTO(savedLead, new LeadDTO());
     }
 
-    public List<LeadDTO> getAllLeads(String statusStr) {
-        log.info("Fetching leads list. Filter status: {}", (statusStr != null ? statusStr : "ALL"));
-        if (principal instanceof com.leadflow.leadflow_backend.model.User) {
-            return ((com.leadflow.leadflow_backend.model.User) principal).getEmail();
-        }
-
-        return SecurityContextHolder.getContext().getAuthentication().getName();
-    }
-
     public List<LeadDTO> getAllLeads(String status) {
+        log.info("Fetching leads list. Filter status: {}", (status != null ? status : "ALL"));
         String currentUserId = getCurrentUserId();
         List<Lead> leads;
 
@@ -94,33 +103,8 @@ public class LeadService {
         return mapToDTO(lead, new LeadDTO());
     }
 
-    public Lead updateLead(String id, @Valid LeadDTO partialLead) {
-        log.info("Processing partial update for lead ID: {}", id);
-    public LeadDTO createLead(final LeadDTO leadDTO) {
-        final Lead lead = new Lead();
-        mapToEntity(leadDTO, lead);
-
-        String currentUserId = getCurrentUserId();
-        lead.setUserId(currentUserId);
-        lead.setCreatedBy(currentUserId);
-
-        lead.setCreatedAt(LocalDateTime.now());
-        lead.setUpdatedAt(LocalDateTime.now());
-
-        Lead savedLead = leadRepository.save(lead);
-        return mapToDTO(savedLead, new LeadDTO());
-    }
-
-    public List<Lead> searchLeads(String query) {
-        return leadRepository.findAll().stream()
-                .filter(lead -> lead.getUserId() != null &&
-                        lead.getUserId().equals(getCurrentUserId()) &&
-                        (lead.getName().toLowerCase().contains(query.toLowerCase()) ||
-                                lead.getEmail().toLowerCase().contains(query.toLowerCase())))
-                .collect(Collectors.toList());
-    }
-
     public Lead updateLead(String id, LeadDTO partialLead) {
+        log.info("Processing partial update for lead ID: {}", id);
         Lead existingLead = leadRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Lead not found with id: " + id));
 
@@ -153,13 +137,21 @@ public class LeadService {
 
     public List<Lead> searchLeads(String query) {
         log.info("Searching leads with query: {}", query);
+        String currentUserId = getCurrentUserId();
+        List<Lead> leads;
+
         if (query == null || query.isEmpty()) {
-            return leadRepository.findAll();
+            leads = leadRepository.findAll();
+        } else if (query.matches("\\d+")) {
+            leads = leadRepository.findByPhoneContaining(query);
+        } else {
+            leads = leadRepository.findByNameContainingIgnoreCase(query);
         }
-        if (query.matches("\\d+")) {
-            return leadRepository.findByPhoneContaining(query);
-        }
-        return leadRepository.findByNameContainingIgnoreCase(query);
+
+        // Retains your security filter from the stream-based attempt
+        return leads.stream()
+                .filter(lead -> lead.getUserId() != null && lead.getUserId().equals(currentUserId))
+                .collect(Collectors.toList());
     }
 
     public void deleteLead(final String id) {
@@ -176,6 +168,8 @@ public class LeadService {
     public boolean idExists(final String id) {
         log.debug("Checking if lead exists for ID: {}", id);
         return leadRepository.existsById(id);
+    }
+
     private LeadDTO mapToDTO(final Lead lead, final LeadDTO leadDTO) {
         leadDTO.setId(lead.getId());
         leadDTO.setName(lead.getName());
@@ -199,8 +193,5 @@ public class LeadService {
         lead.setStatus(leadDTO.getStatus() == null ? null : LeadStatus.valueOf(leadDTO.getStatus()));
         lead.setNotes(leadDTO.getNotes());
         return lead;
-    }
-    public boolean idExists(final String id) {
-        return leadRepository.existsById(id);
     }
 }

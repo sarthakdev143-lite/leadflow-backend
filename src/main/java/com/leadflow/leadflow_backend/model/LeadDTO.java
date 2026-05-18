@@ -26,8 +26,7 @@ public class LeadDTO {
     private String phone;
     private String source;
     private String notes;
-    private String  email;
-    private String status;
+
 
     private String createdBy;
     @Size(max = 255)

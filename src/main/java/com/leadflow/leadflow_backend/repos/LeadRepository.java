@@ -21,13 +21,8 @@ public interface LeadRepository extends MongoRepository<Lead, String> {
     List<Lead> findLeadsNeedingReminder(LocalDateTime cutoff24h);
     @Query("{ 'status': 'IN_PROGRESS', 'updatedAt': { $lt: ?0 } }")
     List<Lead> findLeadsNeedingFollowup(LocalDateTime cutoff2d);
-   // List<Lead> findByStatus(LeadStatus status);
- //   List<Lead> findByNameContainingIgnoreCase(String name);
-  //  List<Lead> findByPhoneContaining(String phone);
+
     List<Lead> findByUserId(String userId);
     List<Lead> findByUserIdAndStatus(String userId, LeadStatus status);
-    @Query("{ 'updatedAt' : { $lt: ?0 } }")
-    List<Lead> findLeadsNeedingFollowup(LocalDateTime cutoff);
-    @Query("{ 'createdAt' : { $lt: ?0 } }")
-    List<Lead> findLeadsNeedingReminder(LocalDateTime cutoff);
+
 }
