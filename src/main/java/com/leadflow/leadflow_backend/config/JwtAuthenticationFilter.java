@@ -40,15 +40,18 @@ public class JwtAuthenticationFilter
                 request.getHeader("Authorization");
 
         String jwtToken = null;
-
         String email = null;
 
-        if(authHeader != null &&
-                authHeader.startsWith("Bearer ")) {
-
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
             jwtToken = authHeader.substring(7);
 
-            email = jwtUtil.extractEmail(jwtToken);
+            try {
+                email = jwtUtil.extractEmail(jwtToken);
+            } catch (Exception e) {
+                log.warn("Invalid JWT token format: {}", e.getMessage());
+                response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Invalid token");
+                return;
+            }
         }
 
         if (email != null &&
@@ -87,6 +90,10 @@ public class JwtAuthenticationFilter
                         "JWT authentication successful for user: {}",
                         email
                 );
+            } else {
+                log.warn("JWT validation failed for token: {}", jwtToken);
+                response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Token validation failed");
+                return;
             }
         }
 

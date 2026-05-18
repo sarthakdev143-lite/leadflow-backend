@@ -22,7 +22,12 @@ public class LeadService {
     @Autowired
     private LeadRepository leadRepository;
 
-    // ─── Create Lead ──────────────────────────────────────────────────────────
+    @Autowired
+    private EmailService emailService;
+
+    @Autowired
+    private AutomationService automationService;
+
     public LeadDTO createLead(final LeadDTO leadDTO) {
         log.info("Creating new lead with name: {}", leadDTO.getName());
         final Lead lead = new Lead();
@@ -33,10 +38,27 @@ public class LeadService {
         lead.setUpdatedAt(LocalDateTime.now());
 
         final Lead savedLead = leadRepository.save(lead);
+        log.info("Lead saved with ID: {}", savedLead.getId());
+
+        // Send email notification for new lead
+        if (savedLead.getEmail() != null && !savedLead.getEmail().isBlank()) {
+            try {
+                emailService.sendEmail(
+                        savedLead.getEmail(),
+                        savedLead.getName(),
+                        "AUTO_NEW_LEAD"
+                );
+                log.info("Welcome email sent to: {}", savedLead.getEmail());
+            } catch (Exception e) {
+                log.error("Failed to send welcome email to {}: {}", savedLead.getEmail(), e.getMessage());
+            }
+        }
+
+        automationService.sendTelegramNotification(savedLead, "AUTO_NEW_LEAD");
+
         return mapToDTO(savedLead, new LeadDTO());
     }
 
-    // ─── Get All Leads ─────────────────────────
     public List<LeadDTO> getAllLeads(String statusStr) {
         log.info("Fetching leads list. Filter status: {}", (statusStr != null ? statusStr : "ALL"));
         List<Lead> leads;
@@ -57,7 +79,6 @@ public class LeadService {
                 .collect(Collectors.toList());
     }
 
-    // ─── Get Lead By ID ───────────────────────────────────────────────────────
     public LeadDTO getLeadById(final String id) {
         log.info("Fetching lead details for ID: {}", id);
 
@@ -66,7 +87,6 @@ public class LeadService {
         return mapToDTO(lead, new LeadDTO());
     }
 
-    // ─── Update Lead (Partial) ────────────────────────────────────────────────
     public Lead updateLead(String id, @Valid LeadDTO partialLead) {
         log.info("Processing partial update for lead ID: {}", id);
         Lead existingLead = leadRepository.findById(id)
@@ -98,7 +118,7 @@ public class LeadService {
         log.info("Lead ID: {} updated successfully", id);
         return leadRepository.save(existingLead);
     }
-    // ─── Search Leads ───────────────────────────────────────────────────────
+
     public List<Lead> searchLeads(String query) {
         log.info("Searching leads with query: {}", query);
         if (query == null || query.isEmpty()) {
@@ -109,7 +129,7 @@ public class LeadService {
         }
         return leadRepository.findByNameContainingIgnoreCase(query);
     }
-    // ─── Delete Lead ──────────────────────────────────────────────────────────
+
     public void deleteLead(final String id) {
         log.warn("Deleting lead with ID: {}", id);
 
@@ -119,16 +139,14 @@ public class LeadService {
         leadRepository.deleteById(id);
     }
 
-    // ─── Check ID for Validation ─────────────────────────────────────────────
     public boolean idExists(final String id) {
         log.debug("Checking if lead exists for ID: {}", id);
         return leadRepository.existsById(id);
     }
 
-    // ─── Helper Methods (Mapping Logic) ──────────────────────────────────────
-
     private Lead mapToEntity(final LeadDTO leadDTO, final Lead lead) {
         lead.setName(leadDTO.getName());
+        lead.setEmail(leadDTO.getEmail());
         lead.setPhone(leadDTO.getPhone());
         lead.setSource(leadDTO.getSource());
         lead.setNotes(leadDTO.getNotes());
