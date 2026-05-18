@@ -137,4 +137,7 @@ public class LeadService {
         lead.setNotes(leadDTO.getNotes());
         return lead;
     }
+    public boolean idExists(final String id) {
+        return leadRepository.existsById(id);
+    }
 }
