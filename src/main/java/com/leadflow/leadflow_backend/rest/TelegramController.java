@@ -13,7 +13,6 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/telegram")
-//@CrossOrigin(origins = "*")
 public class TelegramController {
 
     private static final Logger logger = LoggerFactory.getLogger(TelegramController.class);
@@ -22,18 +21,6 @@ public class TelegramController {
     private TelegramService telegramService;
 
 
-    /**
-     * POST /api/telegram/send
-     * Protected by JWT (configured in SecurityConfig)
-     *
-     * Request body:
-     * {
-     *   "name": "John Doe",
-     *   "phone": "+919876543210",
-     *   "source": "Website",
-     *   "type": "AUTO_NEW_LEAD"
-     * }
-     */
     @PostMapping("/send")
     public ResponseEntity<SendResponse> sendTelegramMessage(
             @Valid @RequestBody TelegramRequest request) {
@@ -42,11 +29,14 @@ public class TelegramController {
         logger.info("Received Telegram send request for lead: {}", request.getName());
 
         try {
+
             SendResponse response = telegramService.sendMessage(
                     request.getName(),
                     request.getPhone(),
                     request.getSource(),
-                    request.getType()
+                    request.getType(),
+                    request.getMessage(),
+                    request.getLeadChatId()
             );
             return ResponseEntity.ok(response);
 
@@ -64,4 +54,3 @@ public class TelegramController {
         }
     }
 }
-

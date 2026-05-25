@@ -1,5 +1,4 @@
 package com.leadflow.leadflow_backend.Scheduler;
-
 import com.leadflow.leadflow_backend.domain.Lead;
 import com.leadflow.leadflow_backend.repos.LeadRepository;
 import com.leadflow.leadflow_backend.service.AutomationService;
@@ -31,8 +30,8 @@ public class ScheduledTasks {
         this.emailService = emailService;
     }
 
-    // Every 2 minutes
-    @Scheduled(cron = "0 */2 * * * *")
+    // Runs every day at midnight (12:00 AM) to process automation rules
+    @Scheduled(cron = "0 0 0 * * ?")
     public void runAutomation() {
 
         logger.info("=================================");
@@ -40,33 +39,14 @@ public class ScheduledTasks {
         logger.info("=================================");
 
         try {
-
-            // DEBUG DATABASE COUNT
             List<Lead> allLeads = leadRepository.findAll();
-
             logger.info("TOTAL LEADS IN DATABASE: {}", allLeads.size());
 
-            for (Lead lead : allLeads) {
-
-                logger.info(
-                        "Lead -> Name: {}, Status: {}, CreatedAt: {}",
-                        lead.getName(),
-                        lead.getStatus(),
-                        lead.getCreatedAt()
-                );
-            }
-
-            sendReminders();
-
-            sendFollowups();
+            sendReminders(allLeads);
+            sendFollowups(allLeads);
 
         } catch (Exception e) {
-
-            logger.error(
-                    "Scheduler failed: {}",
-                    e.getMessage(),
-                    e
-            );
+            logger.error("Scheduler failed: {}", e.getMessage(), e);
         }
 
         logger.info("=================================");
@@ -75,254 +55,113 @@ public class ScheduledTasks {
     }
 
     // =====================================================
-    // NEW LEADS REMINDER
+    // REMINDER: Triggers exactly 24 Hours after creation
     // =====================================================
-
-    private void sendReminders() {
-
+    private void sendReminders(List<Lead> allLeads) {
         try {
-
-            LocalDateTime cutoff24h =
-                    LocalDateTime.now().minusHours(24);
-
-            logger.info("Reminder cutoff time: {}", cutoff24h);
-
-            List<Lead> newLeads =
-                    leadRepository.findLeadsNeedingReminder(cutoff24h);
-
-            logger.info(
-                    "Total NEW leads found: {}",
-                    newLeads.size()
-            );
-
+            LocalDateTime now = LocalDateTime.now();
             int telegramSent = 0;
             int emailSent = 0;
             int skipped = 0;
 
-            for (Lead lead : newLeads) {
+            for (Lead lead : allLeads) {
+                // Condition: Status is NEW, hasn't received reminder, and created at least 24 hours ago
+                if ("NEW".equalsIgnoreCase(String.valueOf(lead.getStatus()))
+                        && lead.getCreatedAt() != null
+                        && lead.getCreatedAt().isBefore(now.minusHours(24))
+                        && lead.getLastReminderSent() == null) {
 
-                logger.info(
-                        "Processing NEW lead: {}",
-                        lead.getName()
-                );
+                    logger.info("Processing NEW lead for 24-hour reminder: {}", lead.getName());
 
-                // TELEGRAM
-                try {
-
-                    automationService.sendTelegramNotification(
-                            lead,
-                            "REMINDER"
-                    );
-
-                    telegramSent++;
-
-                    logger.info(
-                            "Telegram reminder sent for lead: {}",
-                            lead.getName()
-                    );
-
-                } catch (Exception e) {
-
-                    logger.error(
-                            "Telegram reminder failed for {} : {}",
-                            lead.getName(),
-                            e.getMessage()
-                    );
-                }
-
-                // EMAIL
-                if (lead.getEmail() != null &&
-                        !lead.getEmail().trim().isEmpty()) {
-
+                    // Telegram Execution
                     try {
-
-                        emailService.sendEmail(
-                                lead.getEmail(),
-                                "Lead Reminder",
-                                "Hello " + lead.getName()
-                                        + ", this is your reminder."
-                        );
-
-                        emailSent++;
-
-                        logger.info(
-                                "Email reminder sent to: {}",
-                                lead.getEmail()
-                        );
-
+                        automationService.sendTelegramNotification(lead, "REMINDER");
+                        telegramSent++;
                     } catch (Exception e) {
-
-                        logger.error(
-                                "Email reminder failed for {} : {}",
-                                lead.getName(),
-                                e.getMessage()
-                        );
+                        logger.error("Telegram reminder failed for {} : {}", lead.getName(), e.getMessage());
                     }
 
-                } else {
+                    // Email Execution
+                    if (lead.getEmail() != null && !lead.getEmail().trim().isEmpty()) {
+                        try {
+                            emailService.sendEmail(
+                                    lead.getEmail(),
+                                    "REMINDER",
+                                    "Hello " + lead.getName() + ", this is your reminder."
+                            );
+                            emailSent++;
+                        } catch (Exception e) {
+                            logger.error("Email reminder failed for {} : {}", lead.getName(), e.getMessage());
+                        }
+                    } else {
+                        skipped++;
+                    }
 
-                    skipped++;
-
-                    logger.info(
-                            "No email found for lead: {}",
-                            lead.getName()
-                    );
+                    lead.setLastReminderSent(LocalDateTime.now());
+                    leadRepository.save(lead);
+                    logger.info("Updated reminder state for: {}", lead.getName());
                 }
-
-                // UPDATE TIMESTAMP
-                lead.setLastReminderSent(
-                        LocalDateTime.now()
-                );
-
-                leadRepository.save(lead);
-
-                logger.info(
-                        "Updated reminder timestamp for lead: {}",
-                        lead.getName()
-                );
             }
 
-            logger.info(
-                    "Reminder Summary -> Telegram: {}, Email: {}, Skipped: {}, Total: {}",
-                    telegramSent,
-                    emailSent,
-                    skipped,
-                    newLeads.size()
-            );
+            logger.info("Reminder Summary -> Telegram Sent: {}, Email Sent: {}", telegramSent, emailSent);
 
         } catch (Exception e) {
-
-            logger.error(
-                    "Error inside sendReminders(): {}",
-                    e.getMessage(),
-                    e
-            );
+            logger.error("Error inside sendReminders(): {}", e.getMessage());
         }
     }
 
     // =====================================================
-    // CONTACTED LEADS FOLLOW-UP
+    // FOLLOWUP: Triggers exactly 2 Days (48 Hours) after creation
     // =====================================================
-
-    private void sendFollowups() {
-
+    private void sendFollowups(List<Lead> allLeads) {
         try {
-
-            LocalDateTime cutoff2d =
-                    LocalDateTime.now().minusDays(2);
-
-            logger.info("Follow-up cutoff time: {}", cutoff2d);
-
-            List<Lead> contactedLeads =
-                    leadRepository.findLeadsNeedingFollowup(cutoff2d);
-
-            logger.info(
-                    "Total CONTACTED leads found: {}",
-                    contactedLeads.size()
-            );
-
+            LocalDateTime now = LocalDateTime.now();
             int telegramSent = 0;
             int emailSent = 0;
             int skipped = 0;
 
-            for (Lead lead : contactedLeads) {
+            for (Lead lead : allLeads) {
+                // Condition: Created at least 2 days ago and hasn't received follow-up yet
+                if (lead.getCreatedAt() != null
+                        && lead.getCreatedAt().isBefore(now.minusDays(2))
+                        && lead.getLastFollowupSent() == null) {
 
-                logger.info(
-                        "Processing CONTACTED lead: {}",
-                        lead.getName()
-                );
+                    logger.info("Processing lead for 2-day follow-up: {}", lead.getName());
 
-                // TELEGRAM
-                try {
-
-                    automationService.sendTelegramNotification(
-                            lead,
-                            "FOLLOWUP"
-                    );
-
-                    telegramSent++;
-
-                    logger.info(
-                            "Telegram follow-up sent for lead: {}",
-                            lead.getName()
-                    );
-
-                } catch (Exception e) {
-
-                    logger.error(
-                            "Telegram follow-up failed for {} : {}",
-                            lead.getName(),
-                            e.getMessage()
-                    );
-                }
-
-                // EMAIL
-                if (lead.getEmail() != null &&
-                        !lead.getEmail().trim().isEmpty()) {
-
+                    // Telegram Execution
                     try {
-
-                        emailService.sendEmail(
-                                lead.getEmail(),
-                                "Follow-up Reminder",
-                                "Hello " + lead.getName()
-                                        + ", this is your follow-up reminder."
-                        );
-
-                        emailSent++;
-
-                        logger.info(
-                                "Email follow-up sent to: {}",
-                                lead.getEmail()
-                        );
-
+                        automationService.sendTelegramNotification(lead, "FOLLOWUP");
+                        telegramSent++;
                     } catch (Exception e) {
-
-                        logger.error(
-                                "Email follow-up failed for {} : {}",
-                                lead.getName(),
-                                e.getMessage()
-                        );
+                        logger.error("Telegram follow-up failed for {} : {}", lead.getName(), e.getMessage());
                     }
 
-                } else {
+                    // Email Execution
+                    if (lead.getEmail() != null && !lead.getEmail().trim().isEmpty()) {
+                        try {
+                            emailService.sendEmail(
+                                    lead.getEmail(),
+                                    "FOLLOWUP",
+                                    "Hello " + lead.getName() + ", this is your follow-up reminder."
+                            );
+                            emailSent++;
+                        } catch (Exception e) {
+                            logger.error("Email follow-up failed for {} : {}", lead.getName(), e.getMessage());
+                        }
+                    } else {
+                        skipped++;
+                    }
 
-                    skipped++;
-
-                    logger.info(
-                            "No email found for lead: {}",
-                            lead.getName()
-                    );
+                    lead.setLastFollowupSent(LocalDateTime.now());
+                    leadRepository.save(lead);
+                    logger.info("Updated follow-up state for: {}", lead.getName());
                 }
-
-                // UPDATE TIMESTAMP
-                lead.setLastFollowupSent(
-                        LocalDateTime.now()
-                );
-
-                leadRepository.save(lead);
-
-                logger.info(
-                        "Updated follow-up timestamp for lead: {}",
-                        lead.getName()
-                );
             }
 
-            logger.info(
-                    "Follow-up Summary -> Telegram: {}, Email: {}, Skipped: {}, Total: {}",
-                    telegramSent,
-                    emailSent,
-                    skipped,
-                    contactedLeads.size()
-            );
+            logger.info("Follow-up Summary -> Telegram Sent: {}, Email Sent: {}", telegramSent, emailSent);
 
         } catch (Exception e) {
-
-            logger.error(
-                    "Error inside sendFollowups(): {}",
-                    e.getMessage(),
-                    e
-            );
+            logger.error("Error inside sendFollowups(): {}", e.getMessage());
         }
     }
 }

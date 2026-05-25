@@ -24,4 +24,8 @@ public class TelegramRequest {
 
     @NotBlank(message = "Type is required")
     private String type;
+
+    private String message;
+
+    private String leadChatId;
 }

@@ -17,7 +17,6 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 
-
 @Slf4j
 @Service
 public class TelegramService {
@@ -25,7 +24,6 @@ public class TelegramService {
     private static final String TELEGRAM_API_URL = "https://api.telegram.org/bot";
     private static final int MAX_RETRIES = 3;
     private static final long RETRY_DELAY_MS = 1000L;
-
 
     @Value("${telegram.bot.token}")
     private String botToken;
@@ -39,10 +37,20 @@ public class TelegramService {
     @Autowired
     private RestTemplate restTemplate;
 
-
-    public SendResponse sendMessage(String name, String phone, String source, String type) {
-        String messageText = getTemplate(type, name, phone, source);
+    public SendResponse sendMessage(String name, String phone, String source, String type, String customMessage, String leadChatId) {
+        String messageText = getTemplate(type, name, phone, source, customMessage);
         log.info("Attempting to send Telegram message. Type: {}, Name: {}", type, name);
+
+        // Fallback target initialization
+        String targetChatId = this.chatId;
+
+        // Verify if the incoming leadChatId is a valid positive or negative numeric string
+        if (leadChatId != null && !leadChatId.trim().isEmpty() && leadChatId.trim().matches("-?\\d+")) {
+            targetChatId = leadChatId.trim();
+            log.info("Routing message directly to specific lead chatId: {}", targetChatId);
+        } else {
+            log.info("Provided leadChatId is text or invalid. Falling back to default configuration chatId: {}", this.chatId);
+        }
 
         for (int attempt = 1; attempt <= MAX_RETRIES; attempt++) {
             try {
@@ -51,7 +59,7 @@ public class TelegramService {
                 String url = TELEGRAM_API_URL + botToken + "/sendMessage";
 
                 Map<String, String> requestBody = new HashMap<>();
-                requestBody.put("chat_id", chatId);
+                requestBody.put("chat_id", targetChatId);
                 requestBody.put("text", messageText);
                 requestBody.put("parse_mode", "Markdown");
 
@@ -66,7 +74,7 @@ public class TelegramService {
                 Map<String, Object> result = (Map<String, Object>) body.get("result");
                 Integer messageId = (Integer) result.get("message_id");
 
-                logMessage(chatId, messageText, type, MessageStatus.SUCCESS, messageId, null);
+                logMessage(targetChatId, messageText, type, MessageStatus.SUCCESS, messageId, null);
                 log.info("Message sent successfully. Telegram messageId: {}", messageId);
 
                 return new SendResponse(true, messageId, LocalDateTime.now());
@@ -75,7 +83,7 @@ public class TelegramService {
                 log.warn("Attempt {}/{} failed: {}", attempt, MAX_RETRIES, e.getMessage());
 
                 if (attempt == MAX_RETRIES) {
-                    logMessage(chatId, messageText, type, MessageStatus.FAILED, null, e.getMessage());
+                    logMessage(targetChatId, messageText, type, MessageStatus.FAILED, null, e.getMessage());
                     log.error("All {} attempts failed. Logging failure.", MAX_RETRIES);
                     throw new TelegramException("Failed to send Telegram message after " + MAX_RETRIES + " retries", e);
                 }
@@ -92,8 +100,7 @@ public class TelegramService {
         return null;
     }
 
-
-    public String getTemplate(String type, String name, String phone, String source) {
+    public String getTemplate(String type, String name, String phone, String source, String customMessage) {
         switch (type) {
             case "AUTO_NEW_LEAD":
                 return " *New Lead Received!*\n\n"
@@ -115,10 +122,9 @@ public class TelegramService {
                         + "Time for a follow-up!";
 
             case "MANUAL":
-                return " *Lead Update*\n\n"
-                        + "*Name:* " + name + "\n"
-                        + "*Phone:* " + phone + "\n"
-                        + "*Source:* " + source;
+                return (customMessage != null && !customMessage.isEmpty())
+                        ? customMessage
+                        : "No manual message content was provided.";
 
             default:
                 return " *Lead Update*\n\n"
@@ -126,8 +132,6 @@ public class TelegramService {
                         + "*Phone:* " + phone;
         }
     }
-
-
 
     private void logMessage(String chatId, String text, String type,
                             MessageStatus status, Integer msgId, String error) {
@@ -148,6 +152,5 @@ public class TelegramService {
         } catch (Exception e) {
             log.error("FAILED to save message log: {}", e.getMessage(), e);
         }
-
     }
 }

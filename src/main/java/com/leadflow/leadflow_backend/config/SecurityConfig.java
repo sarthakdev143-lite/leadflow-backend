@@ -62,6 +62,9 @@ public class SecurityConfig {
     ) throws Exception {
 
         http
+
+                .cors(cors -> cors.configure(http))
+
                 .csrf(csrf -> csrf.disable())
 
                 .sessionManagement(session ->
@@ -71,9 +74,13 @@ public class SecurityConfig {
                 )
 
                 .authorizeHttpRequests(auth -> auth
+                        // 2. CHANGE: Saari OPTIONS (Preflight) requests ko bina token ke allow kiya
+                        .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll()
+
                         .requestMatchers(
                                 "/api/auth/**",
-                                "/swagger-ui/**","/api/health",
+                                "/swagger-ui/**", "/api/health",
+                                "/api/email/**",
                                 "/v3/api-docs/**"
                         ).permitAll()
 
@@ -102,7 +109,8 @@ public class SecurityConfig {
                     CorsRegistry registry
             ) {
 
-                registry.addMapping("/api/**")
+//                registry.addMapping("/api/**")
+                registry.addMapping("/**")
                         .allowedOrigins(
                                 "http://localhost:3000",
                                 "http://localhost:3001",

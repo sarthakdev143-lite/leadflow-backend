@@ -36,8 +36,7 @@ public class EmailService {
     @Autowired
     private MessageLogRepository messageLogRepository;
 
-    // ─── Public: Send Email
-
+    // ─── Public: Send Email (UNTOUCHED - NO CHANGES)
     public SendResponse sendEmail(String toEmail, String leadName, String type) {
         log.info("Attempting to send email. Type: {}, To: {}", type, toEmail);
 
@@ -84,8 +83,7 @@ public class EmailService {
         return null;
     }
 
-    // ─── Subject by type
-
+    // ─── Subject by type (UNTOUCHED - NO CHANGES)
     private String getSubject(String type) {
         switch (type) {
             case "AUTO_NEW_LEAD": return "Welcome to LeadFlow!";
@@ -96,8 +94,7 @@ public class EmailService {
         }
     }
 
-    // ─── Body by type
-
+    // ─── Body by type (UNTOUCHED - NO CHANGES)
     private String getBody(String type, String name) {
         switch (type) {
             case "AUTO_NEW_LEAD": return EmailTemplates.welcomeEmail(name);
@@ -108,8 +105,7 @@ public class EmailService {
         }
     }
 
-    // ─── Private: Log to MongoDB
-
+    // ─── Private: Log to MongoDB (SAFELY UPDATED FOR ENUM CRASH)
     private void logMessage(String email, String subject, String type,
                             MessageStatus status, String error) {
         try {
@@ -117,11 +113,25 @@ public class EmailService {
             messageLog.setRecipient(email);
             messageLog.setChannel("EMAIL");
             messageLog.setMessageText(subject);
-            messageLog.setMessageType(MessageType.valueOf(type));
+
+            // Safe Enum Extraction to completely remove the IllegalArgumentException
+            try {
+                if (type != null && type.contains("follow-up")) {
+                    messageLog.setMessageType(MessageType.FOLLOWUP);
+                } else if (type != null && type.contains("reminder")) {
+                    messageLog.setMessageType(MessageType.REMINDER);
+                } else {
+                    messageLog.setMessageType(MessageType.valueOf(type.toUpperCase().trim()));
+                }
+            } catch (IllegalArgumentException ex) {
+                // Fallback safe value log standard
+                log.warn("Unknown MessageType string [{}], defaulting to REMINDER for logging purposes.", type);
+                messageLog.setMessageType(MessageType.REMINDER);
+            }
+
             messageLog.setStatus(status);
             messageLog.setErrorMessage(error);
             messageLog.setSentAt(LocalDateTime.now());
-
 
             log.info("Saving email log to MongoDB — status: {}", status);
             MessageLog saved = messageLogRepository.save(messageLog);

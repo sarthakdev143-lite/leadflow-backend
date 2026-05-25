@@ -1,5 +1,4 @@
 package com.leadflow.leadflow_backend.service;
-
 import com.leadflow.leadflow_backend.domain.Lead;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,43 +23,47 @@ public class AutomationService {
                     lead.getName(),
                     lead.getPhone(),
                     lead.getSource(),
-                    type
+                    type,
+                    null,
+                    null
             );
-            logger.info("Telegram {} notification sent for lead: {}", type, lead.getName());
+            logger.info("Telegram {} notification sent successfully for lead: {}", type, lead.getName());
         } catch (Exception e) {
             logger.error("Failed Telegram notification for {} : {}", lead.getName(), e.getMessage(), e);
         }
     }
 
+
     public void sendReminderEmail(Lead lead) {
         try {
             if (lead.getEmail() == null || lead.getEmail().isBlank()) {
-                logger.warn("Lead {} has no email address", lead.getName());
+                logger.warn("Lead {} has no email address specified", lead.getName());
                 return;
             }
             emailService.sendEmail(
                     lead.getEmail(),
-                    "Lead Reminder",
+                    "REMINDER",
                     "Hello " + lead.getName() + ", this is your reminder message."
             );
-            logger.info("Reminder email sent to: {}", lead.getEmail());
+            logger.info("Reminder email dispatched to production channel for: {}", lead.getEmail());
         } catch (Exception e) {
             logger.error("Failed to send reminder email to {} : {}", lead.getName(), e.getMessage(), e);
         }
     }
 
+
     public void sendFollowupEmail(Lead lead) {
         try {
             if (lead.getEmail() == null || lead.getEmail().isBlank()) {
-                logger.warn("Lead {} has no email address", lead.getName());
+                logger.warn("Lead {} has no email address specified", lead.getName());
                 return;
             }
             emailService.sendEmail(
                     lead.getEmail(),
-                    "Lead Follow-up",
+                    "FOLLOWUP",
                     "Hello " + lead.getName() + ", this is your follow-up reminder."
             );
-            logger.info("Follow-up email sent to: {}", lead.getEmail());
+            logger.info("Follow-up email dispatched to production channel for: {}", lead.getEmail());
         } catch (Exception e) {
             logger.error("Failed to send follow-up email to {} : {}", lead.getName(), e.getMessage(), e);
         }
