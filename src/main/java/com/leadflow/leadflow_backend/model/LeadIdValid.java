@@ -1,9 +1,7 @@
 package com.leadflow.leadflow_backend.model;
-
 import static java.lang.annotation.ElementType.ANNOTATION_TYPE;
 import static java.lang.annotation.ElementType.FIELD;
 import static java.lang.annotation.ElementType.METHOD;
-
 import com.leadflow.leadflow_backend.service.LeadService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Constraint;
@@ -15,7 +13,6 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 import java.util.Map;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.servlet.HandlerMapping;
 

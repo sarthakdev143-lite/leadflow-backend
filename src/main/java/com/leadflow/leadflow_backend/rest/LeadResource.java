@@ -12,8 +12,6 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
-import java.util.Optional;
-
 
 @Slf4j
 @RestController
@@ -22,9 +20,6 @@ public class LeadResource {
 
     @Autowired
     private LeadService leadService;
-
-    @Autowired
-    private com.leadflow.leadflow_backend.repos.LeadRepository leadRepository;
 
     @PostMapping
     public ResponseEntity<?> createLead(@Valid @RequestBody final LeadDTO leadDTO) {
@@ -98,16 +93,8 @@ public class LeadResource {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
         }
     }
-
-    @PutMapping("/sync-telegram")
-    public ResponseEntity<?> syncTelegramId(@RequestParam String phone, @RequestParam String chatId) {
-        Optional<Lead> leadOpt = leadRepository.findByPhone(phone);
-        if(leadOpt.isPresent()) {
-            Lead lead = leadOpt.get();
-            lead.setTelegramChatId(chatId); // Auto map ho gayi ID
-            leadRepository.save(lead);
-            return ResponseEntity.ok("Telegram ID synced dynamically for " + lead.getName());
-        }
-        return ResponseEntity.badRequest().body("Phone number not found in CRM");
-    }
 }
+
+
+
+

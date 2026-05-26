@@ -21,15 +21,6 @@ public class EmailController {
     @Autowired
     private EmailService emailService;
 
-    /**
-     * POST /api/email/send
-     * Request:
-     * {
-     *   "email": "john@example.com",
-     *   "name": "John Doe",
-     *   "type": "AUTO_NEW_LEAD"
-     * }
-     */
     @PostMapping("/send")
     public ResponseEntity<SendResponse> sendEmail(
             @Valid @RequestBody Emailrequest request) {

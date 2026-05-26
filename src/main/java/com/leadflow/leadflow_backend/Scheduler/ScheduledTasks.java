@@ -30,7 +30,7 @@ public class ScheduledTasks {
         this.emailService = emailService;
     }
 
-    // Runs every day at midnight (12:00 AM) to process automation rules
+
     @Scheduled(cron = "0 0 0 * * ?")
     public void runAutomation() {
 
