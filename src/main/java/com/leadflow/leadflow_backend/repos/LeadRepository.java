@@ -17,7 +17,7 @@ public interface LeadRepository extends MongoRepository<Lead, String> {
 
     @Query("{ 'status': 'NEW', 'createdAt': { $lt: ?0 }, $or: [ { 'lastReminderSent': null }, { 'lastReminderSent': { $exists: false } } ] }")
     List<Lead> findLeadsNeedingReminder(LocalDateTime cutoff24h);
-    @Query("{ 'status': 'NEW', 'createdAt': { $lt: ?0 }, $or: [ { 'lastFollowupSent': null }, { 'lastFollowupSent': { $exists: false } } ] }")
+    @Query("{ 'status': 'CONTACTED', 'createdAt': { $lt: ?0 }, $or: [ { 'lastFollowupSent': null }, { 'lastFollowupSent': { $exists: false } } ] }")
     List<Lead> findLeadsNeedingFollowup(LocalDateTime cutoff2d);
 
     List<Lead> findByUserId(String userId);
