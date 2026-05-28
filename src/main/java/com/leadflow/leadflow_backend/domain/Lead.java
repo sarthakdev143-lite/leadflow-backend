@@ -53,6 +53,6 @@ public class Lead {
 
     private LocalDateTime lastFollowupSent;
 
-    private String telegramChatId;
+
 
 }

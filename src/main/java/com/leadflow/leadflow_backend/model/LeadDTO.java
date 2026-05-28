@@ -38,4 +38,6 @@ public class LeadDTO {
 
     private LocalDateTime updatedAt;
 
+
+
 }
