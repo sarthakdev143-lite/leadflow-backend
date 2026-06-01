@@ -29,7 +29,7 @@ public class DirectMessageResource {
         try {
             Twilio.init(accountSid, authToken);
 
-            // Dispatches message directly through cloud gateway channel backend
+     
             Message message = Message.creator(
                     new PhoneNumber("whatsapp:" + payload.getPhone()), // To lead's number
                     new PhoneNumber(twilioWhatsappNumber),             // From Twilio

@@ -1,5 +1,4 @@
 package com.leadflow.leadflow_backend.config;
-
 import org.springframework.boot.jackson.autoconfigure.JsonMapperBuilderCustomizer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
