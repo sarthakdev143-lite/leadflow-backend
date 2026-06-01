@@ -22,17 +22,18 @@ public class DirectMessageResource {
 
     @Value("${twilio.whatsapp.number}")
     private String twilioWhatsappNumber;
+
     @PostMapping("/direct-whatsapp")
     public ResponseEntity<?> sendDirectMessage(@RequestBody final DirectMessagePayload payload) {
         log.info("Initiating direct background dispatch to number: {}", payload.getPhone());
         try {
             Twilio.init(accountSid, authToken);
 
-
+     
             Message message = Message.creator(
-                    new PhoneNumber("whatsapp:" + payload.getPhone()),
-                    new PhoneNumber(twilioWhatsappNumber),
-                    payload.getMessage()
+                    new PhoneNumber("whatsapp:" + payload.getPhone()), // To lead's number
+                    new PhoneNumber(twilioWhatsappNumber),             // From Twilio
+                    payload.getMessage()                               // Message text
             ).create();
 
             log.info("Direct delivery execution success. SID: {}", message.getSid());
@@ -43,4 +44,6 @@ public class DirectMessageResource {
         }
     }
 }
+
+
 

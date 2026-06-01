@@ -1,0 +1,195 @@
+services:
+  nginx:
+    image: nginx:1.27-alpine
+    container_name: leadflow-nginx
+    restart: unless-stopped
+    ports:
+      - "${NGINX_PORT:-80}:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - leadflow-backend-1
+      - leadflow-backend-2
+      - leadflow-backend-3
+    networks:
+      - leadflow-network
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost/api/health"]
+      interval: 30s
+      timeout: 10s
+      start_period: 10s
+      retries: 3
+
+  # Backend Instance 1
+  leadflow-backend-1:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: leadflow-backend-1
+    restart: unless-stopped
+    expose:
+      - "8080"
+    env_file:
+      - .env
+    environment:
+      SERVER_PORT: 8080
+      INSTANCE_ID: 1
+      MONGO_URL: ${MONGO_URL}
+      JWT_SECRET_TOKEN: ${JWT_SECRET_TOKEN}
+      JWT_EXPIRATION_TIME: ${JWT_EXPIRATION_TIME:-604800000}
+      MAIL_USERNAME: ${MAIL_USERNAME}
+      MAIL_PASSWORD: ${MAIL_PASSWORD}
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN}
+      TELEGRAM_CHAT_ID: ${TELEGRAM_CHAT_ID}
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3000}
+      WHATSAPP_ACCOUNT_ID: ${WHATSAPP_ACCOUNT_ID}
+      WHATSAPP_AUTH_TOKEN: ${WHATSAPP_AUTH_TOKEN}
+      WHATSAPP_NUMBER: ${WHATSAPP_NUMBER}
+      REDIS_HOST: leadflow-redis
+      REDIS_PORT: 6379
+    depends_on:
+      mongo:
+        condition: service_healthy
+      leadflow-redis:
+        condition: service_healthy
+    networks:
+      - leadflow-network
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8080/api/health"]
+      interval: 30s
+      timeout: 15s
+      start_period: 90s
+      retries: 5
+
+  # Backend Instance 2
+  leadflow-backend-2:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: leadflow-backend-2
+    restart: unless-stopped
+    expose:
+      - "8080"
+    env_file:
+      - .env
+    environment:
+      SERVER_PORT: 8080
+      INSTANCE_ID: 2
+      MONGO_URL: ${MONGO_URL}
+      JWT_SECRET_TOKEN: ${JWT_SECRET_TOKEN}
+      JWT_EXPIRATION_TIME: ${JWT_EXPIRATION_TIME:-604800000}
+      MAIL_USERNAME: ${MAIL_USERNAME}
+      MAIL_PASSWORD: ${MAIL_PASSWORD}
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN}
+      TELEGRAM_CHAT_ID: ${TELEGRAM_CHAT_ID}
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3000}
+      WHATSAPP_ACCOUNT_ID: ${WHATSAPP_ACCOUNT_ID}
+      WHATSAPP_AUTH_TOKEN: ${WHATSAPP_AUTH_TOKEN}
+      WHATSAPP_NUMBER: ${WHATSAPP_NUMBER}
+      REDIS_HOST: leadflow-redis
+      REDIS_PORT: 6379
+    depends_on:
+      mongo:
+        condition: service_healthy
+      leadflow-redis:
+        condition: service_healthy
+    networks:
+      - leadflow-network
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8080/api/health"]
+      interval: 30s
+      timeout: 15s
+      start_period: 90s
+      retries: 5
+
+  # Backend Instance 3
+  leadflow-backend-3:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: leadflow-backend-3
+    restart: unless-stopped
+    expose:
+      - "8080"
+    env_file:
+      - .env
+    environment:
+      SERVER_PORT: 8080
+      INSTANCE_ID: 3
+      MONGO_URL: ${MONGO_URL}
+      JWT_SECRET_TOKEN: ${JWT_SECRET_TOKEN}
+      JWT_EXPIRATION_TIME: ${JWT_EXPIRATION_TIME:-604800000}
+      MAIL_USERNAME: ${MAIL_USERNAME}
+      MAIL_PASSWORD: ${MAIL_PASSWORD}
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN}
+      TELEGRAM_CHAT_ID: ${TELEGRAM_CHAT_ID}
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3000}
+      WHATSAPP_ACCOUNT_ID: ${WHATSAPP_ACCOUNT_ID}
+      WHATSAPP_AUTH_TOKEN: ${WHATSAPP_AUTH_TOKEN}
+      WHATSAPP_NUMBER: ${WHATSAPP_NUMBER}
+      REDIS_HOST: leadflow-redis
+      REDIS_PORT: 6379
+    depends_on:
+      mongo:
+        condition: service_healthy
+      leadflow-redis:
+        condition: service_healthy
+    networks:
+      - leadflow-network
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8080/api/health"]
+      interval: 30s
+      timeout: 15s
+      start_period: 90s
+      retries: 5
+
+  # Redis for distributed session/cache
+  leadflow-redis:
+    image: redis:7.0-alpine
+    container_name: leadflow-redis
+    restart: unless-stopped
+    expose:
+      - "6379"
+    command: redis-server --appendonly yes
+    volumes:
+      - redis-data:/data
+    networks:
+      - leadflow-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      start_period: 10s
+      retries: 3
+
+  # Comment out the mongo service if using MongoDB Atlas
+  mongo:
+    image: mongo:7.0
+    container_name: leadflow-mongo
+    restart: unless-stopped
+    ports:
+      - "${MONGO_PORT:-27017}:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME:-admin}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD:-secret}
+      MONGO_INITDB_DATABASE: ${MONGO_INITDB_DATABASE:-leadflow_db}
+    volumes:
+      - mongo-data:/data/db
+    networks:
+      - leadflow-network
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      start_period: 20s
+      retries: 5
+
+volumes:
+  mongo-data:
+    driver: local
+  redis-data:
+    driver: local
+
+networks:
+  leadflow-network:
+    driver: bridge

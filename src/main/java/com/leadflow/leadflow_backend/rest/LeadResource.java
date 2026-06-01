@@ -1,5 +1,4 @@
 package com.leadflow.leadflow_backend.rest;
-
 import com.leadflow.leadflow_backend.domain.Lead;
 import com.leadflow.leadflow_backend.model.LeadDTO;
 import com.leadflow.leadflow_backend.service.LeadService;
@@ -23,7 +22,8 @@ public class LeadResource {
 
     @PostMapping
     public ResponseEntity<?> createLead(@Valid @RequestBody final LeadDTO leadDTO) {
-        log.info("REST request to create a new lead: {}", leadDTO.getName());
+        // Log clean rakha hai taaki telegram hatne par crash na ho
+        log.info("REST request to create a new lead. Name: {}", leadDTO.getName());
         try {
             LeadDTO created = leadService.createLead(leadDTO);
             return ResponseEntity.status(HttpStatus.CREATED).body(created);
@@ -84,7 +84,10 @@ public class LeadResource {
         log.warn("REST request to delete lead with ID: {}", id);
         try {
             leadService.deleteLead(id);
-            return ResponseEntity.ok("Lead deleted successfully.");
+
+
+            return ResponseEntity.ok(java.util.Map.of("status", "SUCCESS", "message", "Lead deleted successfully."));
+
         } catch (ResponseStatusException e) {
             log.error("Security violation on delete for ID {}: {}", id, e.getReason());
             return ResponseEntity.status(e.getStatusCode()).body(e.getReason());
@@ -93,8 +96,5 @@ public class LeadResource {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
         }
     }
+
 }
-
-
-
-
